@@ -57,9 +57,21 @@ if st.button('Run Scraper'):
         data = {'Company Name': all_company_names, 'Company Link': all_company_links, 'Company Name1': all_company_name1}
         df = pd.DataFrame(data)
 
-        # Split the 'Company Name' column based on '·' delimiter
-        df['Company Name'] = df['Company Name'].astype(str)
-        df[['col1', 'col2', 'col3', 'col4', 'col5']] = df['Company Name'].str.split('·', expand=True,n=4)
+        # Split the 'Company Name' column based on '·' delimiter, ensuring we handle missing columns
+        split_columns = df['Company Name'].str.split('·', expand=True, n=4)
+
+        # Ensure the result has exactly 5 columns, filling missing columns with None
+        num_columns = split_columns.shape[1]
+        required_columns = 5
+
+        if num_columns < required_columns:
+            # Add empty columns if fewer than 5 were created
+            for i in range(num_columns, required_columns):
+                split_columns[i] = None
+
+        # Rename columns and assign them back to the DataFrame
+        split_columns.columns = ['col1', 'col2', 'col3', 'col4', 'col5']
+        df = pd.concat([df, split_columns], axis=1)
 
         # Cleaning up columns with numeric values
         columns_to_clean = ['col3', 'col4', 'col5']
@@ -114,10 +126,3 @@ if st.button('Run Scraper'):
         st.download_button(label="Download Excel File", data=output, file_name='final_output.xlsx')
     else:
         st.error('Please enter a search query.')
-
-
-
-
-
-
-        
