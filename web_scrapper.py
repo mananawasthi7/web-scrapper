@@ -59,7 +59,7 @@ if st.button('Run Scraper'):
 
         # Split the 'Company Name' column based on '·' delimiter
         df['Company Name'] = df['Company Name'].astype(str)
-        df[['col1', 'col2', 'col3', 'col4', 'col5']] = df['Company Name'].str.split('·', expand=True)
+        df[['col1', 'col2', 'col3', 'col4', 'col5']] = df['Company Name'].str.split('·', expand=True,n=4)
 
         # Cleaning up columns with numeric values
         columns_to_clean = ['col3', 'col4', 'col5']
