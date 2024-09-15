@@ -8,23 +8,25 @@ import io
 import xlsxwriter
 
 # Set up Streamlit
-st.title('Web Scraper for Google Search Results')
-st.write('Enter the data you want to search, and the results will be saved in an Excel file.')
+st.title('🌐 Google Local Search Web Scraper')
+st.write('Enter your search query, and the results will be saved in an Excel file. The process can take up to 3 minutes, so please be patient.')
 
 # Input for search query
-search_query = st.text_input('Enter search query (e.g., "real estate agent in Jasola")')
+search_query = st.text_input('🔍 Enter search query (e.g., "real estate agent in Jasola")')
 
 # Button to start the scraping process
 if st.button('Run Scraper'):
     if search_query:
+        st.info("Starting the scraping process. This might take a few minutes. ⏳")
+        
         # Generate a fake user agent
         user_agent = UserAgent().random
         headers = {'User-Agent': user_agent, 'Accept-Language': 'en-US,en;q=0.5'}
-        
+
         all_company_names = []
         all_company_links = []
         all_company_name1 = []
-        
+
         # Loop through each page (assuming 12 pages)
         for page in range(1, 13):
             url = f"https://www.google.com/search?sca_esv=585445638&tbs=lf:1,lf_ui:2&tbm=lcl&q={search_query}&rflfq=1&num=20&start={20 * (page - 1)}"
@@ -54,7 +56,7 @@ if st.button('Run Scraper'):
             time.sleep(5)
 
         # Create DataFrame and save to Excel
-        data = {'Company Name': all_company_names, 'Company Link': all_company_links, 'Company Name1': all_company_name1}
+        data = {'Company Link': all_company_links, 'Company Name1': all_company_name1, 'Company Name': all_company_names}
         df = pd.DataFrame(data)
 
         # Split the 'Company Name' column based on '·' delimiter, ensuring we handle missing columns
@@ -115,14 +117,24 @@ if st.button('Run Scraper'):
                     df.at[index, 'Company Name1'] = word
                     break
 
+        # Rename columns as requested
+        df.rename(columns={
+            'Company Name1': 'Company_Name',
+            'col1': 'Company Name + Review',
+            'col5': 'Contact Details'
+        }, inplace=True)
+
+        # Keep only the requested columns
+        final_df = df[['Company Link', 'Company_Name', 'Company Name + Review', 'Contact Details']]
+
         # Save DataFrame to an in-memory buffer (BytesIO)
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False)
+            final_df.to_excel(writer, index=False, sheet_name='Scraped_Data')
         output.seek(0)
 
         # Notify user of completion and provide download link
-        st.success('Scraping complete! You can download the results below:')
-        st.download_button(label="Download Excel File", data=output, file_name='final_output.xlsx')
+        st.success('✅ Scraping complete! You can download the results below:')
+        st.download_button(label="📥 Download Excel File", data=output, file_name='scraped_data.xlsx')
     else:
-        st.error('Please enter a search query.')
+        st.error('❌ Please enter a search query.')
